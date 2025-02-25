@@ -301,8 +301,6 @@ void bst_remove(struct bst* bst, int key) {
 	}
 
 	free(tbr);
-
-	//TODO asdasdaasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasd
 	return;
 }
 
