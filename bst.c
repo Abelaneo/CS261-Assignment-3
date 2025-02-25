@@ -5,8 +5,8 @@
  * functions you might need.  Also, don't forget to include your name and
  * @oregonstate.edu email address below.
  *
- * Name:
- * Email:
+ * Name: Oscar Abelanet
+ * Email: abelaneo@oregonstate.edu
  */
 
 #include <stdlib.h>
@@ -46,10 +46,19 @@ struct bst {
  * a pointer to it.
  */
 struct bst* bst_create() {
-  /*
-   * FIXME:
-   */
-  return NULL;
+	struct bst* new_tree = malloc(sizeof(struct bst));
+	new_tree->root = NULL;
+	return new_tree;
+}
+
+void root_free(struct bst_node* root) {
+	if (root == NULL) {
+		return;
+	} else {
+		root_free(root->left);
+		root_free(root->right);
+	}
+	free(root);
 }
 
 /*
@@ -62,10 +71,19 @@ struct bst* bst_create() {
  *   bst - the BST to be destroyed.  May not be NULL.
  */
 void bst_free(struct bst* bst) {
-  /*
-   * FIXME:
-   */
-  return;
+	if (bst->root != NULL) {
+		root_free(bst->root);
+	}
+	free(bst);
+}
+
+
+int root_size(struct bst_node* root) {
+	if (root == NULL) {
+		return 0;
+	} else {
+		return root_size(root->left) + root_size(root->right) + 1;
+	}
 }
 
 /*
@@ -76,11 +94,14 @@ void bst_free(struct bst* bst) {
  *   bst - the BST whose elements are to be counted.  May not be NULL.
  */
 int bst_size(struct bst* bst) {
-  /*
-   * FIXME:
-   */
-  return 0;
+	if (bst->root == NULL) {
+		return 0;
+	} else {
+		return root_size(bst->root);
+	}
 }
+
+
 
 /*
  * This function should insert a new key/value pair into the BST.  The key
@@ -98,10 +119,35 @@ int bst_size(struct bst* bst) {
  *     which means that a pointer of any type can be passed.
  */
 void bst_insert(struct bst* bst, int key, void* value) {
-  /*
-   * FIXME:
-   */
-  return;
+	struct bst_node* new_node = malloc(sizeof(struct bst_node));
+	new_node->key = key;
+	new_node->value = value;
+	new_node->left = NULL;
+	new_node->right = NULL;
+
+	if (bst->root == NULL) {
+		bst->root = new_node;
+		return;
+	}
+
+	struct bst_node* cur = bst->root;
+	while (1 == 1) {
+		if (key > cur->key) {
+			if (cur->right == NULL) {
+				cur->right = new_node;
+				return;
+			} else {
+				cur = cur->right;
+			}
+		} else {
+			if (cur->left == NULL) {
+				cur->left = new_node;
+				return;
+			} else {
+				cur = cur->left;
+			}
+		}
+	}
 }
 
 /*
@@ -116,10 +162,148 @@ void bst_insert(struct bst* bst, int key, void* value) {
  *   key - the key of the key/value pair to be removed from the BST.
  */
 void bst_remove(struct bst* bst, int key) {
-  /*
-   * FIXME:
-   */
-  return;
+  	struct bst_node* cur = bst->root;
+	struct bst_node* parent = cur;
+	int d;
+	
+	if (cur == NULL) {
+		return;
+	}
+	
+	// Checks if the root is to be removed
+	if (cur->key == key) {
+		struct bst_node* tbr = cur;
+
+		// If node to be removed is a leaf
+		if (tbr->left == NULL && tbr->right == NULL) {
+			bst->root = NULL;
+			free(tbr);
+			return;	
+
+		// Else if to be removed node has 2 children
+		} else if (tbr->left != NULL && tbr->right != NULL) {
+			struct bst_node* suc = tbr->right;
+			struct bst_node* suc_parent;
+			int N_is_suc_p;
+
+			if (suc->left == NULL) {
+				N_is_suc_p = 1;
+			} else {
+				N_is_suc_p = 0;
+			}	
+
+			while (suc->left != NULL) {
+				suc_parent = suc;
+				suc = suc->left;
+			}
+		
+			suc->left = tbr->left;
+			if (N_is_suc_p == 0) {
+				suc_parent->left = suc->right;
+				suc->right = tbr->right;
+			}
+	
+			bst->root = suc;
+			free(tbr);
+			return;
+
+		// Else if tbr has one child
+		} else {	
+			struct bst_node* tbr_child;
+			if (tbr->left != NULL) {
+				tbr_child = tbr->left;
+			} else {
+				tbr_child = tbr->right;
+			}
+
+			bst->root = tbr_child;
+			free(tbr);
+			return;
+		}
+	}
+	
+
+	// Iterates through to find the node to be removed and its parent
+	while (cur->key != key) {
+		if (cur->key < key) {
+			if (cur->right != NULL) {
+				parent = cur;
+				cur = cur->right;
+				d = 1;
+			} else {
+				return;
+			}
+		} else {
+			if (cur->left != NULL) {
+				parent = cur;
+				cur = cur->left;
+				d = -1;
+			} else {
+				return;
+			}
+		}
+	}
+
+	struct bst_node* tbr = cur;
+	struct bst_node* tbr_parent = parent;
+
+	// If node to be removed is a leaf
+	if (tbr->left == NULL && tbr->right == NULL) {
+		if (d == 1) {
+			tbr_parent->right = NULL;
+		} else {
+			tbr_parent->left = NULL;
+		}
+
+	// Else if to be removed node has 2 children
+	} else if (tbr->left != NULL && tbr->right != NULL) {
+		struct bst_node* suc = tbr->right;
+		struct bst_node* suc_parent;
+		int N_is_suc_p;
+
+		if (suc->left == NULL) {
+			N_is_suc_p = 1;
+		} else {
+			N_is_suc_p = 0;
+		}
+
+		while (suc->left != NULL) {
+			suc_parent = suc;
+			suc = suc->left;
+		}
+		
+		suc->left = tbr->left;
+		if (N_is_suc_p == 0) {
+			suc_parent->left = suc->right;
+			suc->right = tbr->right;
+		}
+
+		if (d == 1) {
+			tbr_parent->right = suc;
+		} else {
+			tbr_parent->left = suc;
+		}
+
+	// Else if to be removed node has one child
+	} else {	
+		struct bst_node* tbr_child;
+		if (tbr->left != NULL) {
+			tbr_child = tbr->left;
+		} else {
+			tbr_child = tbr->right;
+		}
+
+		if (d = 1) {
+			tbr_parent->right = tbr_child;
+		} else {
+			tbr_parent->left = tbr_child;
+		}
+	}
+
+	free(tbr);
+
+	//TODO asdasdaasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasd
+	return;
 }
 
 /*
@@ -139,10 +323,29 @@ void bst_remove(struct bst* bst, int key) {
  *   if the key `key` was not found in `bst`.
  */
 void* bst_get(struct bst* bst, int key) {
-  /*
-   * FIXME:
-   */
-  return NULL;
+  	if (bst->root == NULL) {
+		return NULL;
+	}
+
+	struct bst_node* cur = bst->root;
+
+	while (1 == 1) {
+		if (cur->key < key) {
+			if (cur->right != NULL) {
+				cur = cur->right;
+			} else {
+				return NULL;
+			}
+		} else if (cur->key > key) {
+			if (cur->left != NULL) {
+				cur = cur->left;
+			} else {
+				return NULL;
+			}
+		} else {
+			return cur->value;
+		}
+	}
 }
 
 /*****************************************************************************
@@ -163,12 +366,39 @@ void* bst_get(struct bst* bst, int key) {
  * Return:
  *   Should return the height of bst.
  */
- int bst_height(struct bst* bst) {
-  /*
-   * FIXME:
-   */
-   return 0;
- }
+int bst_height(struct bst* bst) {
+	if (bst->root == NULL) {
+		return -1;
+  	}
+
+	struct bst_node* left = bst->root->left; 
+	struct bst_node* right = bst->root->right;
+  
+	if (left == NULL && right == NULL) {
+		return 0;
+  	} else if (left == NULL) {
+		struct bst rightsub;
+		rightsub.root = right;
+		return bst_height(&rightsub) + 1;
+	} else if (right == NULL) {
+		struct bst leftsub;
+		leftsub.root = left;
+		return bst_height(&leftsub) + 1;
+  	} else {
+		struct bst rightsub;
+		rightsub.root = right;
+		struct bst leftsub;
+		leftsub.root = left;
+
+		int longleft = 1 + bst_height(&leftsub);
+		int longright = 1 + bst_height(&rightsub);
+		if (longleft < longright) {
+			return longright;
+		} else {
+			return longleft;
+		}
+	}
+}
 
 /*
  * This function should determine whether a specified value is a valid path
@@ -185,10 +415,31 @@ void* bst_get(struct bst* bst, int key) {
  *   which the keys add up to `sum`.  Should return 0 otherwise.
  */
 int bst_path_sum(struct bst* bst, int sum) {
-  /*
-   * FIXME:
-   */
-  return 0;
+	if (bst->root == NULL) {
+		return 0;
+	}
+
+	if (bst->root->left == NULL && bst->root->right == NULL) {
+		if (bst->root->key == sum) {
+			return 1;
+		}
+		else return 0;
+	}
+	
+	int newsum = sum - bst->root->key;
+
+	struct bst leftsub;
+	leftsub.root = bst->root->left;
+	int left = bst_path_sum(&leftsub, newsum);
+
+	struct bst rightsub;
+	rightsub.root = bst->root->right;
+	int right = bst_path_sum(&rightsub, newsum);
+
+	if (right == 1 || left == 1) {
+		return 1;
+	}
+	return 0;
 }
 
 /*
@@ -210,8 +461,32 @@ int bst_path_sum(struct bst* bst, int sum) {
  *   Should return the sum of all keys in `bst` between `lower` and `upper`.
  */
 int bst_range_sum(struct bst* bst, int lower, int upper) {
-  /*
-   * FIXME:
-   */
-  return 0;
+	if (bst->root == NULL) {
+		return 0;
+	}
+	
+	int left_sum = 0;
+	int right_sum = 0;
+
+	if (bst->root->left != NULL) {
+		if (bst->root->key > lower) {
+			
+			struct bst leftsub;
+			leftsub.root = bst->root->left;
+			left_sum = bst_range_sum(&leftsub, lower, upper);
+		}
+
+	} 
+	if (bst->root->right != NULL) {
+		if (bst->root->key < upper) {
+			
+			struct bst rightsub;
+			rightsub.root = bst->root->right;
+			right_sum = bst_range_sum(&rightsub, lower, upper);
+		}
+	}
+	if (bst->root->key <= upper && bst->root->key >= lower) {
+		return right_sum + left_sum + bst->root->key;
+	}
+	return right_sum + left_sum;
 }
